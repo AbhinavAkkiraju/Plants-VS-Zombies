@@ -6,20 +6,21 @@ def onAppStart(app):
     app.height = 1080
 
     # Loading screen
-    app.url_loading_background = 'http://localhost:8000/loading_screen.png'
-    app.url_title = 'http://localhost:8000/title_header.png'
-    app.url_loading = 'http://localhost:8000/loading_bar.png'
-    app.sound = Sound('http://localhost:8000/music.mp3')
+    app.url_loading_background = r"C:\Users\abhin\OneDrive\Documents\GitHub\Plants-VS-Zombies\media\loading_screen.png"
+    app.url_title = r"C:\Users\abhin\OneDrive\Documents\GitHub\Plants-VS-Zombies\media\title_header.png"
+    app.url_loading = r"C:\Users\abhin\OneDrive\Documents\GitHub\Plants-VS-Zombies\media\loading_bar.png"
+    app.sound = Sound(r"C:\Users\abhin\OneDrive\Documents\GitHub\Plants-VS-Zombies\media\music.mp3")
     app.sound.play(loop = True)
     app.isLoadingScreen = True
 
     # Selector screen 
     app.isHomeScreen = False
-    app.url_home_background = 'http://localhost:8000/selector_screen.png'
+    app.url_home_background = r"C:\Users\abhin\OneDrive\Documents\GitHub\Plants-VS-Zombies\media\selector_screen.png"
 
     # Help and options screen
     app.isHelpOptionsScreen = False
-    app.url_help_box = 'http://localhost:8000/help_options_screen.png'
+    # app.url_help_box = urllib.requires.pathname2url("C:\Users\abhin\OneDrive\Documents\GitHub\Plants-VS-Zombies\media\help_options_screen.png")
+    app.url_help_box = r"C:\Users\abhin\OneDrive\Documents\GitHub\Plants-VS-Zombies\media\help_options_screen.png"
     app.coverUnwantedColor = rgb(26,28,41)
 
 def redrawAll(app):
