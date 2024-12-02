@@ -2,8 +2,8 @@ from cmu_graphics import *
 from pathlib import Path
 import random
 from level_objects import Lawnmower, PlantCard, Sun
-from plant_objects import postPlant, Sunflower
-from zombie_objects import Zombie
+from plant_objects import postPlant, Sunflower, Peashooter, DoublePeashooter, Iceshooter
+from zombie_objects import RegZombie, ConeZombie, BucketZombie
 from get_grid_coor import getClosestGridCoor
 import time
 import pygame
@@ -20,21 +20,21 @@ def onAppStart(app):
     app.height = 1080
 
     # Loading screen
-    app.url_loading_background = str(media_dir / "loading_screen.png")
-    app.url_title = str(media_dir / "title_header.png")
-    app.url_loading = str(media_dir / "loading_bar.png")
-    app.background_music = pygame.mixer.Sound(str(media_dir / "music.mp3"))
+    app.url_loading_background = str(media_dir / "loading_screen.png") # https://www.spriters-resource.com/mobile/plantsvszombies/sheet/206074/
+    app.url_title = str(media_dir / "title_header.png") # https://www.amazon.com/Plants-vs-Zombies-1-Lawnmageddon/dp/1616551925 
+    app.url_loading = str(media_dir / "loading_bar.png") # https://www.alamy.com/stock-photo-plants-vs-zombies-pc-game-loading-screen-38615868.html 
+    app.background_music = pygame.mixer.Sound(str(media_dir / "music.mp3")) # https://www.youtube.com/watch?v=7EPqbS_ErgE&list=PL-Ha54QFPaSs5omBkutsbVXUhP6Fexutp
     app.background_music.play(-1)
     app.isLoadingScreen = True
-    app.click_sound = pygame.mixer.Sound(str(media_dir / "click_sound.mp3"))
+    app.click_sound = pygame.mixer.Sound(str(media_dir / "click_sound.mp3")) # https://www.youtube.com/watch?v=i0DON3AjhW4&pp=ygULY2xpY2sgc291bmQ%3D
 
     # Selector screen 
     app.isHomeScreen = False
-    app.url_home_background = str(media_dir / "selector_screen.png")
+    app.url_home_background = str(media_dir / "selector_screen.png") # Screenshot from my iPhone - Plants VS Zombies 1 Application
 
     # Help and options screen
     app.isHelpOptionsScreen = False
-    app.url_help_box = str(media_dir / "help_options_screen.png")
+    app.url_help_box = str(media_dir / "help_options_screen.png") # Screenshot from my iPhone - Plants VS Zombies 1 Application
     app.coverUnwantedColor = rgb(26,28,41)
     app.lineColor = rgb(139, 159, 169)
     app.outsideDragger = rgb(137, 138, 182)
@@ -46,17 +46,17 @@ def onAppStart(app):
 
     # Level selector screen
     app.isLevelSelectorScreen = False
-    app.level_selector_screen_background = str(media_dir / "level_selector_screen.png")
+    app.level_selector_screen_background = str(media_dir / "level_selector_screen.png") # Screenshot from my iPhone - Plants VS Zombies 1 Application
 
     # Level 1 (grass level)
     app.isGrassLevel = False
-    app.grass_level_background = str(media_dir / "front_yard_grass.png")
+    app.grass_level_background = str(media_dir / "front_yard_grass.png") # https://www.reddit.com/r/PlantsVSZombies/comments/vqqhjs/i_made_pvz_evening_enjoy/
     app.lawnmowers = {"lawnmower1":[], "lawnmower2":[], "lawnmower3":[], "lawnmower4":[], "lawnmower5":[]}
     app.topbar = {'plant1':[], 'plant2':[], 'plant3':[], 'plant4':[], 'plant5':[], 'plant6':[]}
-    app.sun = str(media_dir / "sun.png")
+    app.sun = str(media_dir / "sun.png") # https://heroism.fandom.com/wiki/Sun_(Plants_vs._Zombies)
     app.sun_count = 50
-    app.plants_top_bar = str(media_dir / "plants_top_bar.png")
-    app.shovel = str(media_dir / "shovel.png")
+    app.plants_top_bar = str(media_dir / "plants_top_bar.png") # https://plantsvszombies.fandom.com/wiki/Ice_Level
+    app.shovel = str(media_dir / "shovel.png") # https://plantsvszombies.fandom.com/wiki/Ice_Level
     app.grid = [[0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -68,10 +68,16 @@ def onAppStart(app):
     app.sunFallSpeed = 3
     app.sunSpawnTimer = 0
     app.zombieSpeed = 1
+    app.zombiesKilled = 0
     app.zombieSpawnTimer = 0
+    app.totalZombies = 50
+    app.totalRegZombies = 30
+    app.totalConeZombies = 10
+    app.totalBucketZombies = 10
     app.zombies = []
     app.sunflowers = []
     app.lanesOccupied = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
+    app.possibleZombies = []
 
     # Animation for grass level to move from left to right for plant select screen
     app.stepsPerSecond = 100
@@ -79,27 +85,30 @@ def onAppStart(app):
 
     # Plant select screen
     app.isPlantSelectScreen = False
-    app.plant_select_background = str(media_dir / "plant_select_screen.png")
+    app.plant_select_background = str(media_dir / "plant_select_screen.png") # https://www.solitairelaboratory.com/solitairearcade/zombies/plantsvszombiesguide.html
     app.selected_plants = []
     app.curr_plant = None
     app.moved_plant = False
-    app.delete_plant = str(media_dir / 'trash.png')
+    app.delete_plant = str(media_dir / 'trash.png') # https://pvzcc.fandom.com/wiki/Stealthy_Imp_(PvZ2)
     app.selected_delete_card = None
     app.grassLevelStarted = False
     app.animationDone = False
     app.countdown = False
     app.number = 4
+    app.progress = 0
     app.countdownDone = False
+    app.levelWon = False
 
     # Plants
+    # All of these are screenshots from this image: https://tvtropes.org/pmwiki/pmwiki.php/Characters/PlantsVsZombiesPlants
     app.pea_shooter_card = str(plants_dir / "pea_shooter.png")
     app.sunflower_card = str(plants_dir / "sunflower.png")
     app.walnut_card = str(plants_dir / "walnut.png")
-    app.cherry_card = str(plants_dir / "cherry.png")
-    app.mine_card = str(plants_dir / "mine.png")
+    app.double_pea_shooter_card = str(plants_dir / "double_pea_shooter.png")
     app.ice_shooter_card = str(plants_dir / "ice_shooter.png")
-    app.chomper_card = str(plants_dir / "chomper.png")
-    app.all_plants = [app.pea_shooter_card, app.sunflower_card, app.walnut_card, app.cherry_card, app.mine_card, app.ice_shooter_card, app.chomper_card]
+    app.tallnut_card = str(plants_dir / "tallnut.png")
+    app.double_sunflower_card = str(plants_dir / "double_sunflower.png")
+    app.all_plants = [app.pea_shooter_card, app.sunflower_card, app.walnut_card, app.double_pea_shooter_card, app.ice_shooter_card, app.tallnut_card, app.double_sunflower_card]
 
 def redrawAll(app):
     if app.isLoadingScreen: # Drawing the loading screen
@@ -151,6 +160,10 @@ def redrawAll(app):
             drawImage(app.delete_plant, 757, 30, width = 85, height = 85)
         if app.countdown:
             drawLabel(app.number, app.width/2, app.height/2, size=100)
+
+        if app.levelWon:
+            drawLabel("YOU WIN!", app.width/2, app.height/2, size=100)
+
         if app.grassLevelStarted and app.animationDone:
             for i in range(1, 6):
                 app.lawnmowers[i-1] = Lawnmower(i)
@@ -168,6 +181,10 @@ def redrawAll(app):
                 sun.draw()
             for zombie in app.zombies:
                 zombie.draw()
+            drawRect(870, 25, 330, 45, fill = rgb(71,88,113), border = "black", borderWidth = 3)
+            drawRect(875, 30, 320, 35, fill = rgb(34,33,51))
+            if app.progress > 0:
+                drawRect(875, 30, app.progress*320, 35, fill = rgb(173,214,19))
 
 def onStep(app):
     if app.isGrassLevel and not app.grassLevelStarted:
@@ -182,6 +199,7 @@ def onStep(app):
         else:
             app.countdown = True
     
+    # Countdown to start level
     if app.countdown:
         time.sleep(1)
         if app.number > 0:
@@ -190,6 +208,7 @@ def onStep(app):
             app.countdown = False
             app.animationDone = True
     
+    # Sun randomly spawning in and falling down the screen
     if app.animationDone:
         app.sunSpawnTimer += 10
         if app.sunSpawnTimer > random.randint(750, 1250):
@@ -202,9 +221,18 @@ def onStep(app):
                 if sun.y > app.height:
                     app.suns.remove(sun)
         
+        # Zombies randomly spawning in map and moving while not eating plants
         app.zombieSpawnTimer += 10
-        if app.zombieSpawnTimer > random.randint(2000, 2500):
-            newZombie = Zombie()
+        if app.zombieSpawnTimer > random.randint(1500, 2250) and len(app.possibleZombies) > 1:
+            choice = random.randint(0, len(app.possibleZombies) - 1)
+            newZombie = app.possibleZombies[choice]
+            app.possibleZombies.pop(choice)
+            app.lanesOccupied[newZombie.lane] += 1
+            app.zombies.append(newZombie)
+            app.zombieSpawnTimer = 0
+        elif app.zombieSpawnTimer > random.randint(1500, 2250) and len(app.possibleZombies) == 1:
+            newZombie = app.possibleZombies[0]
+            app.possibleZombies.pop(0)
             app.lanesOccupied[newZombie.lane] += 1
             app.zombies.append(newZombie)
             app.zombieSpawnTimer = 0
@@ -213,25 +241,36 @@ def onStep(app):
                 zombie.x -= app.zombieSpeed
             if zombie.x < (app.lawnmowers[zombie.lane].x + 20) or zombie.isDead:
                 app.zombies.remove(zombie)
+                app.totalZombies -= 1
+                app.zombiesKilled += 1
                 app.lanesOccupied[zombie.lane] -= 1
+                app.progress = app.zombiesKilled / (app.zombiesKilled + app.totalZombies)
         
+        # Sunflowers will randomly spawn sun if alive or die if they lose all their health
         for sunflower in app.sunflowers[:]:
             if sunflower.isDead:
                 app.sunflowers.remove(sunflower)
-            else:
+            elif not app.levelWon:
                 newSun = sunflower.update()
                 if newSun:
                     app.suns.append(newSun)
         
+        # Win condition
+        if app.totalZombies == 0:
+            app.levelWon = True
+        
+        # Plants will start to attack zombies whenever a zombie falls in their lane
         for row in range(5):
             for col in range(9):
-                if not isinstance(app.grid[row][col], int) and not isinstance(app.grid[row][col], Sunflower) and app.lanesOccupied[row] >= 1:
+                if not isinstance(app.grid[row][col], int) and ((isinstance(app.grid[row][col], Peashooter)) or (isinstance(app.grid[row][col], Iceshooter)) or (isinstance(app.grid[row][col], DoublePeashooter))) and app.lanesOccupied[row] >= 1:
                     app.grid[row][col].update(app.zombies)
-                if not isinstance(app.grid[row][col], int) and not isinstance(app.grid[row][col], Sunflower) and app.lanesOccupied[row] == 0:
+                if not isinstance(app.grid[row][col], int) and ((isinstance(app.grid[row][col], Peashooter)) or (isinstance(app.grid[row][col], Iceshooter)) or (isinstance(app.grid[row][col], DoublePeashooter))) and app.lanesOccupied[row] == 0:
                     app.grid[row][col].reset()
                 if not isinstance(app.grid[row][col], int) and app.grid[row][col].isDead:
                     app.grid[row][col] = 0
 
+        # Checking if zombie has run into a plant
+        # If it does, it will start to eat the plant
         for zombie in app.zombies:
             if 160 <= zombie.x<= 1445:
                 x, y = getClosestGridCoor(zombie.x, zombie.y)
@@ -280,6 +319,17 @@ def onMousePress(app, mouseX, mouseY):
     elif app.isLevelSelectorScreen and 375 <= mouseX <= 440 and 375 <= mouseY <= 415:
         app.isLevelSelectorScreen = False
         app.isGrassLevel = True
+        app.sunFallSpeed = 3
+        app.sunSpawnTimer = 0
+        app.zombieSpeed = 1
+        app.totalZombies = 5
+        app.possibleZombies = []
+        for _ in range(3):
+            app.possibleZombies.append(RegZombie())
+        for _ in range(1):
+            app.possibleZombies.append(ConeZombie())
+        for _ in range(1):
+            app.possibleZombies.append(BucketZombie())
 
     elif app.isPlantSelectScreen:
         # User clicks on pea shooter plant
@@ -297,24 +347,24 @@ def onMousePress(app, mouseX, mouseY):
             app.curr_plant = app.walnut_card
             app.moved_plant = False
 
-        # User clicks on cherry plant
+        # User clicks on double peashooter plant
         elif 300 <= mouseX <= 375 and 180 <= mouseY <= 265:
-            app.curr_plant = app.cherry_card
-            app.moved_plant = False
-        
-        # User clicks on potato mine plant
-        elif 385 <= mouseX <= 460 and 180 <= mouseY <= 265:
-            app.curr_plant = app.mine_card
+            app.curr_plant = app.double_pea_shooter_card
             app.moved_plant = False
         
         # User clicks on ice shooter plant
-        elif 470 <= mouseX <= 545 and 180 <= mouseY <= 265:
+        elif 385 <= mouseX <= 460 and 180 <= mouseY <= 265:
             app.curr_plant = app.ice_shooter_card
             app.moved_plant = False
         
-        # User clicks on venus trap plant
+        # User clicks on tallnut plant
+        elif 470 <= mouseX <= 545 and 180 <= mouseY <= 265:
+            app.curr_plant = app.tallnut_card
+            app.moved_plant = False
+        
+        # User clicks on double sunflower plant
         elif 555 <= mouseX <= 630 and 180 <= mouseY <= 265:
-            app.curr_plant = app.chomper_card
+            app.curr_plant = app.double_sunflower_card
             app.moved_plant = False
         
         # User places selected plant in row
@@ -358,6 +408,7 @@ def onMousePress(app, mouseX, mouseY):
             app.grassLevelStarted = True
             app.isPlantSelectScreen = False
 
+    # User clicks on one of the plant cards on the top of the screen
     elif app.grassLevelStarted and 10 <= mouseY <= 90 and 133 <= mouseX <= 675:
         if 133 <= mouseX <= 208:
             app.card_selected = app.selected_plants[0]
@@ -371,7 +422,10 @@ def onMousePress(app, mouseX, mouseY):
             app.card_selected = app.selected_plants[4]
         else:
             app.card_selected = app.selected_plants[5]
-        
+
+    # User attempts to place the plant on the lawn
+    # If they do not have enough sun, the card is unselected
+    # Otherwise, the plant is placed and the user loses the sun cost for that plant
     elif app.grassLevelStarted and 160 <= mouseX <= 1445 and 110 <= mouseY <= 780 and app.card_selected:
         app.gridX, app.gridY = getClosestGridCoor(mouseX, mouseY)
         if isinstance(app.grid[app.gridX][app.gridY], int):
@@ -383,7 +437,10 @@ def onMousePress(app, mouseX, mouseY):
                     app.sunflowers.append(curr_plant)
                 app.card_selected = None
                 app.sun_count -= test.cost
+        else:
+            app.card_selected = None
 
+    # User clicks on sun and collects 25 sun points
     elif app.animationDone:
         for sun in app.suns:
             if (mouseX-sun.x)**2 + (mouseY-sun.y)**2 <= sun.radius**2:
@@ -392,6 +449,7 @@ def onMousePress(app, mouseX, mouseY):
 
     print(mouseX, mouseY)
 
+# User adjusts volume
 def onMouseDrag(app, mouseX, mouseY):
     if (app.slider1OuterCoor[5][0] <= mouseX <= app.slider1OuterCoor[2][0]) and (app.slider1OuterCoor[0][1] <= mouseY <= app.slider1OuterCoor[4][1]):
         if 870 <= mouseX <= 1128:

@@ -9,7 +9,7 @@ class Lawnmower:
     def __init__(self, lane):
         self.lane = lane
         self.width = self.height = 100
-        self.image_path = str(media_dir / "lawn_mower.png")
+        self.image_path = str(media_dir / "lawn_mower.png") # https://plantsvszombies.fandom.com/wiki/Lawn_Mower/Gallery
         self.activated = False
         self.x = self.y = 0
         match lane:
@@ -35,6 +35,7 @@ class PlantCard:
         self.x = 0
         self.y = 10
         self.width = 75
+        self.selected = False
         self.height = 80
         match number:
             case 1:
@@ -50,6 +51,11 @@ class PlantCard:
             case 6:
                 self.x = 600
         drawImage(plant, self.x, self.y, width = self.width, height = self.height)
+        if self.selected:
+            drawLine(self.x, self.y, self.x + self.width, self.y, fill = "yellow")
+            drawLine(self.x, self.y, self.x, self.y + self.height, fill = "yellow")
+            drawLine(self.x, self.y + self.height, self.x + self.width, self.y + self.height, fill = "yellow")
+            drawLine(self.x + self.width, self.y, self.x + self.width, self.y + self.height, fill = "yellow")
 
 class Sun:
     def __init__(self, x = 0, y = 0, produced = False):

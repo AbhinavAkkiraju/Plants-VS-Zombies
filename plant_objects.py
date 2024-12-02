@@ -33,6 +33,7 @@ class Peashooter(Plant):
         self.damage = 20
         self.peaTimer = 0
         self.peaTime = 50
+        self.peaActive = False
         self.fill = None
         self.border = None
     
@@ -75,10 +76,115 @@ class Sunflower(Plant):
 
     def produceSun(self):
         return Sun(self.x + 50, self.y + 50, True)
+
+class Walnut(Plant):
+    def __init__(self, row, col):
+        super().__init__(row, col, plants_dir / "walnut.png", cost = 50, health = 4000)
+
+class Tallnut(Plant):
+    def __init__(self, row, col):
+        super().__init__(row, col, plants_dir / "tallnut.png", cost = 125, health = 8000)
+
+class DoubleSunflower(Plant):
+    def __init__(self, row, col):
+        super().__init__(row, col, plants_dir / "double_sunflower.png", cost = 125, health = 300)
+        self.sun = str(media_dir / "sun.png")
+        self.sunProductionTimer = 0
+        self.sunProductionThreshold = random.randint(200, 300)
     
+    def update(self):
+        self.sunProductionTimer += 1
+        if self.sunProductionTimer >= self.sunProductionThreshold:
+            self.sunProductionTimer = 0
+            self.sunProductionThreshold = random.randint(100, 200)
+            return self.produceSun()
+        return None
+
+    def produceSun(self):
+        return Sun(self.x + 50, self.y + 50, True)
+
+class DoublePeashooter(Plant):
+    def __init__(self, row, col):
+        super().__init__(row, col, plants_dir / "double_peashooter.png", cost = 100, health = 300)
+        self.peaX = 220 + 145 * col
+        self.peaXCopy = self.peaX
+        self.damage = 40
+        self.peaTimer = 0
+        self.peaTime = 50
+        self.peaActive = False
+        self.fill = None
+        self.border = None
+    
+    def draw(self):
+        super().draw()
+        drawCircle(self.peaXCopy, self.y + 60, 10, fill=self.fill, border=self.border)
+        drawCircle(self.peaXCopy + 20, self.y + 60, 10, fill = self.fill, border = self.border)
+        
+    def update(self, zombies):
+        self.fill = rgb(187,215,100)
+        self.border = 'black'
+        self.peaTimer += 1
+        self.peaXCopy += 50
+        for zombie in zombies:
+            if self.peaXCopy > zombie.x+(zombie.width/2):
+                zombie.takeDamage(self.damage)
+                self.peaXCopy = self.peaX
+        if self.peaXCopy > 1920:
+            self.peaXCopy = self.peaX
+        
+    def reset(self):
+        self.fill = None
+        self.border = None
+        self.peaXCopy = self.peaX
+        self.peaTimer = 0
+
+class Iceshooter(Plant):
+    def __init__(self, row, col):
+        super().__init__(row, col, plants_dir / "iceshooter.gif", cost = 100, health = 300)
+        self.peaX = 220 + 145 * col
+        self.peaXCopy = self.peaX
+        self.damage = 20
+        self.peaTimer = 0
+        self.peaTime = 50
+        self.peaActive = False
+        self.fill = None
+        self.border = None
+    
+    def draw(self):
+        super().draw()
+        drawCircle(self.peaXCopy, self.y + 60, 10, fill=self.fill, border=self.border)
+        
+    def update(self, zombies):
+        self.fill = rgb(187,215,100)
+        self.border = 'black'
+        self.peaTimer += 1
+        self.peaXCopy += 50
+        for zombie in zombies:
+            if self.peaXCopy > zombie.x+(zombie.width/2):
+                zombie.takeDamage(self.damage)
+                self.peaXCopy = self.peaX
+        if self.peaXCopy > 1920:
+            self.peaXCopy = self.peaX
+        
+    def reset(self):
+        self.fill = None
+        self.border = None
+        self.peaXCopy = self.peaX
+        self.peaTimer = 0
+
 def postPlant(plant, x, y):
-    if os.path.basename(plant) == os.path.basename(str(plants_dir / "pea_shooter.png")):
+    if os.path.basename(plant) == os.path.basename(str(plants_dir / "pea_shooter.png")): # https://plantsvszombies.fandom.com/wiki/Peashooter
         return Peashooter(x, y)
-    elif os.path.basename(plant) == os.path.basename(str(plants_dir / "sunflower.png")):
+    elif os.path.basename(plant) == os.path.basename(str(plants_dir / "sunflower.png")): # https://characters.fandom.com/wiki/Sunflower
         return Sunflower(x, y)
+    elif os.path.basename(plant) == os.path.basename(str(plants_dir / "walnut.png")): # https://www.pngegg.com/en/png-ydrac
+        return Walnut(x, y)
+    elif os.path.basename(plant) == os.path.basename(str(plants_dir / "tallnut.png")): # https://plantsvszombies.fandom.com/wiki/Tall-nut
+        return Tallnut(x, y)
+    elif os.path.basename(plant) == os.path.basename(str(plants_dir / "double_pea_shooter.png")): # https://plantsvszombies.fandom.com/wiki/Repeater
+        return DoublePeashooter(x, y)
+    elif os.path.basename(plant) == os.path.basename(str(plants_dir / "double_sunflower.png")): # https://plantsvszombies.fandom.com/wiki/Twin_Sunflower
+        return DoubleSunflower(x, y)
+    elif os.path.basename(plant) == os.path.basename(str(plants_dir / "ice_shooter.png")): # https://www.pngegg.com/en/png-zsemg
+        return DoubleSunflower(x, y)
 
