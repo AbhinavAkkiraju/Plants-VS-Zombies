@@ -71,7 +71,7 @@ def onAppStart(app):
     app.zombieSpawnTimer = 0
     app.zombies = []
     app.sunflowers = []
-    app.lanesOccupied = [0, 0, 0, 0, 0]
+    app.lanesOccupied = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
 
     # Animation for grass level to move from left to right for plant select screen
     app.stepsPerSecond = 100
@@ -203,26 +203,43 @@ def onStep(app):
                     app.suns.remove(sun)
         
         app.zombieSpawnTimer += 10
-        if app.zombieSpawnTimer > random.randint(1500, 2500):
+        if app.zombieSpawnTimer > random.randint(2000, 2500):
             newZombie = Zombie()
-            app.lanesOccupied[newZombie.lane] = 1
+            app.lanesOccupied[newZombie.lane] += 1
             app.zombies.append(newZombie)
             app.zombieSpawnTimer = 0
-        for zombie in app.zombies: #CHANGE LANESOCCUPIED TO DICT WITH ZOMBIE COUNT
-            zombie.x -= app.zombieSpeed
+        for zombie in app.zombies:
+            if zombie.notEating: 
+                zombie.x -= app.zombieSpeed
             if zombie.x < (app.lawnmowers[zombie.lane].x + 20) or zombie.isDead:
                 app.zombies.remove(zombie)
+                app.lanesOccupied[zombie.lane] -= 1
         
-        for sunflower in app.sunflowers:
-            newSun = sunflower.update()
-            if newSun:
-                app.suns.append(newSun)
+        for sunflower in app.sunflowers[:]:
+            if sunflower.isDead:
+                app.sunflowers.remove(sunflower)
+            else:
+                newSun = sunflower.update()
+                if newSun:
+                    app.suns.append(newSun)
         
         for row in range(5):
-                for col in range(9):
-                    if not isinstance(app.grid[row][col], int) and not isinstance(app.grid[row][col], Sunflower) and app.lanesOccupied[row] == 1:
-                        app.grid[row][col].update(app.zombies)
+            for col in range(9):
+                if not isinstance(app.grid[row][col], int) and not isinstance(app.grid[row][col], Sunflower) and app.lanesOccupied[row] >= 1:
+                    app.grid[row][col].update(app.zombies)
+                if not isinstance(app.grid[row][col], int) and not isinstance(app.grid[row][col], Sunflower) and app.lanesOccupied[row] == 0:
+                    app.grid[row][col].reset()
+                if not isinstance(app.grid[row][col], int) and app.grid[row][col].isDead:
+                    app.grid[row][col] = 0
 
+        for zombie in app.zombies:
+            if 160 <= zombie.x<= 1445:
+                x, y = getClosestGridCoor(zombie.x, zombie.y)
+                if app.grid[x][y] != 0 and (zombie.x - (zombie.width/2) + 40) <= app.grid[x][y].x:
+                    zombie.notEating = False
+                    app.grid[x][y].takeDamage(zombie.damage)
+                else:
+                    zombie.notEating = True
 
 def onMousePress(app, mouseX, mouseY):
 
@@ -360,9 +377,10 @@ def onMousePress(app, mouseX, mouseY):
         if isinstance(app.grid[app.gridX][app.gridY], int):
             test = postPlant(app.card_selected, 0, 0)
             if test.cost <= app.sun_count:
-                app.grid[app.gridX][app.gridY] = postPlant(app.card_selected, app.gridX, app.gridY)
-                if isinstance(postPlant(app.card_selected, app.gridX, app.gridY), Sunflower):
-                    app.sunflowers.append(postPlant(app.card_selected, app.gridX, app.gridY))
+                curr_plant = postPlant(app.card_selected, app.gridX, app.gridY)
+                app.grid[app.gridX][app.gridY] = curr_plant
+                if isinstance(curr_plant, Sunflower):
+                    app.sunflowers.append(curr_plant)
                 app.card_selected = None
                 app.sun_count -= test.cost
 
