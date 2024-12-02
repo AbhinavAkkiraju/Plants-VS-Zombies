@@ -2,7 +2,8 @@ from cmu_graphics import *
 from pathlib import Path
 import random
 from level_objects import Lawnmower, PlantCard, Sun
-from plant_objects import postPlant
+from plant_objects import postPlant, Sunflower
+from zombie_objects import Zombie
 from get_grid_coor import getClosestGridCoor
 import time
 import pygame
@@ -66,9 +67,14 @@ def onAppStart(app):
     app.suns = []
     app.sunFallSpeed = 3
     app.sunSpawnTimer = 0
+    app.zombieSpeed = 1
+    app.zombieSpawnTimer = 0
+    app.zombies = []
+    app.sunflowers = []
+    app.lanesOccupied = [0, 0, 0, 0, 0]
 
     # Animation for grass level to move from left to right for plant select screen
-    app.stepsPerSecond = 60
+    app.stepsPerSecond = 100
     app.grassX = 0
 
     # Plant select screen
@@ -160,6 +166,8 @@ def redrawAll(app):
                         app.grid[row][col].draw()
             for sun in app.suns:
                 sun.draw()
+            for zombie in app.zombies:
+                zombie.draw()
 
 def onStep(app):
     if app.isGrassLevel and not app.grassLevelStarted:
@@ -184,14 +192,37 @@ def onStep(app):
     
     if app.animationDone:
         app.sunSpawnTimer += 10
-        if app.sunSpawnTimer > random.randint(1000, 1500):
+        if app.sunSpawnTimer > random.randint(750, 1250):
             newSun = Sun()
             app.suns.append(newSun)
             app.sunSpawnTimer = 0
         for sun in app.suns:
-            sun.y += app.sunFallSpeed
-            if sun.y > app.height:
-                app.suns.remove(sun)
+            if sun.producedFromFlower == False:
+                sun.y += app.sunFallSpeed
+                if sun.y > app.height:
+                    app.suns.remove(sun)
+        
+        app.zombieSpawnTimer += 10
+        if app.zombieSpawnTimer > random.randint(1500, 2500):
+            newZombie = Zombie()
+            app.lanesOccupied[newZombie.lane] = 1
+            app.zombies.append(newZombie)
+            app.zombieSpawnTimer = 0
+        for zombie in app.zombies: #CHANGE LANESOCCUPIED TO DICT WITH ZOMBIE COUNT
+            zombie.x -= app.zombieSpeed
+            if zombie.x < (app.lawnmowers[zombie.lane].x + 20) or zombie.isDead:
+                app.zombies.remove(zombie)
+        
+        for sunflower in app.sunflowers:
+            newSun = sunflower.update()
+            if newSun:
+                app.suns.append(newSun)
+        
+        for row in range(5):
+                for col in range(9):
+                    if not isinstance(app.grid[row][col], int) and not isinstance(app.grid[row][col], Sunflower) and app.lanesOccupied[row] == 1:
+                        app.grid[row][col].update(app.zombies)
+
 
 def onMousePress(app, mouseX, mouseY):
 
@@ -327,8 +358,13 @@ def onMousePress(app, mouseX, mouseY):
     elif app.grassLevelStarted and 160 <= mouseX <= 1445 and 110 <= mouseY <= 780 and app.card_selected:
         app.gridX, app.gridY = getClosestGridCoor(mouseX, mouseY)
         if isinstance(app.grid[app.gridX][app.gridY], int):
-            app.grid[app.gridX][app.gridY] = postPlant(app.card_selected, app.gridX, app.gridY)
-            app.card_selected = None
+            test = postPlant(app.card_selected, 0, 0)
+            if test.cost <= app.sun_count:
+                app.grid[app.gridX][app.gridY] = postPlant(app.card_selected, app.gridX, app.gridY)
+                if isinstance(postPlant(app.card_selected, app.gridX, app.gridY), Sunflower):
+                    app.sunflowers.append(postPlant(app.card_selected, app.gridX, app.gridY))
+                app.card_selected = None
+                app.sun_count -= test.cost
 
     elif app.animationDone:
         for sun in app.suns:

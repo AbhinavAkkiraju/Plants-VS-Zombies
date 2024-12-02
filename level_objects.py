@@ -52,12 +52,17 @@ class PlantCard:
         drawImage(plant, self.x, self.y, width = self.width, height = self.height)
 
 class Sun:
-    def __init__(self):
-        self.x = random.randint(20, 1900)
-        self.y = 0
+    def __init__(self, x = 0, y = 0, produced = False):
+        if x == 0 and y == 0:
+            self.x = random.randint(20, 1450)
+            self.y = 0
+        else:
+            self.x = x
+            self.y = y
         self.radius = 30
         self.height = 75
         self.width = 75
+        self.producedFromFlower = produced
         self.image = str(media_dir / "sun.png")
 
     def draw(self):
