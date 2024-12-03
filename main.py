@@ -78,6 +78,7 @@ def onAppStart(app):
     app.sunflowers = []
     app.lanesOccupied = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
     app.possibleZombies = []
+    app.shovel_activated = False
 
     # Animation for grass level to move from left to right for plant select screen
     app.stepsPerSecond = 100
@@ -322,13 +323,13 @@ def onMousePress(app, mouseX, mouseY):
         app.sunFallSpeed = 3
         app.sunSpawnTimer = 0
         app.zombieSpeed = 1
-        app.totalZombies = 5
+        app.totalZombies = 10
         app.possibleZombies = []
-        for _ in range(3):
+        for _ in range(6):
             app.possibleZombies.append(RegZombie())
-        for _ in range(1):
+        for _ in range(2):
             app.possibleZombies.append(ConeZombie())
-        for _ in range(1):
+        for _ in range(2):
             app.possibleZombies.append(BucketZombie())
 
     elif app.isPlantSelectScreen:
@@ -422,6 +423,10 @@ def onMousePress(app, mouseX, mouseY):
             app.card_selected = app.selected_plants[4]
         else:
             app.card_selected = app.selected_plants[5]
+    
+    # User clicks on shovel
+    elif app.grassLevelStarted and 710 <= mouseX <= 810 and 10 <= mouseY <= 100:
+        app.shovel_activated = True
 
     # User attempts to place the plant on the lawn
     # If they do not have enough sun, the card is unselected
@@ -439,6 +444,20 @@ def onMousePress(app, mouseX, mouseY):
                 app.sun_count -= test.cost
         else:
             app.card_selected = None
+    
+    # User attempts to shovel plant away
+    elif app.grassLevelStarted and 160 <= mouseX <= 1445 and 110 <= mouseY <= 780 and app.shovel_activated:
+        app.gridX, app.gridY = getClosestGridCoor(mouseX, mouseY)
+        if not isinstance(app.grid[app.gridX][app.gridY], int):
+            curr_plant = app.grid[app.gridX][app.gridY]
+            cost_curr_plant = curr_plant.cost
+            app.grid[app.gridX][app.gridY] = 0
+            if isinstance(curr_plant, Sunflower):
+                app.sunflowers.remove(curr_plant)
+            app.sun_count += cost_curr_plant
+            app.shovel_activated = None
+        else:
+            app.shovel_activated = None
 
     # User clicks on sun and collects 25 sun points
     elif app.animationDone:
