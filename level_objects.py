@@ -34,6 +34,7 @@ class PlantCard:
     def __init__(self, number, plant):
         self.x = 0
         self.y = 10
+        self.plant = plant
         self.width = 75
         self.selected = False
         self.height = 80
@@ -50,12 +51,7 @@ class PlantCard:
                 self.x = 506
             case 6:
                 self.x = 600
-        drawImage(plant, self.x, self.y, width = self.width, height = self.height)
-        if self.selected:
-            drawLine(self.x, self.y, self.x + self.width, self.y, fill = "yellow")
-            drawLine(self.x, self.y, self.x, self.y + self.height, fill = "yellow")
-            drawLine(self.x, self.y + self.height, self.x + self.width, self.y + self.height, fill = "yellow")
-            drawLine(self.x + self.width, self.y, self.x + self.width, self.y + self.height, fill = "yellow")
+        drawImage(self.plant, self.x, self.y, width = self.width, height = self.height)
 
 class Sun:
     def __init__(self, x = 0, y = 0, produced = False):

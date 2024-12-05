@@ -50,6 +50,7 @@ def onAppStart(app):
 
     # Level 1 (grass level)
     app.isGrassLevel = False
+    app.static_background = None
     app.grass_level_background = str(media_dir / "front_yard_grass.png") # https://www.reddit.com/r/PlantsVSZombies/comments/vqqhjs/i_made_pvz_evening_enjoy/
     app.lawnmowers = {"lawnmower1":[], "lawnmower2":[], "lawnmower3":[], "lawnmower4":[], "lawnmower5":[]}
     app.topbar = {'plant1':[], 'plant2':[], 'plant3':[], 'plant4':[], 'plant5':[], 'plant6':[]}
@@ -67,7 +68,7 @@ def onAppStart(app):
     app.suns = []
     app.sunFallSpeed = 3
     app.sunSpawnTimer = 0
-    app.zombieSpeed = 1
+    app.zombieSpeed = 2.5
     app.zombiesKilled = 0
     app.zombieSpawnTimer = 0
     app.totalZombies = 50
@@ -79,9 +80,11 @@ def onAppStart(app):
     app.lanesOccupied = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
     app.possibleZombies = []
     app.shovel_activated = False
+    app.background_drawn = False
+    app.static_background = []
 
     # Animation for grass level to move from left to right for plant select screen
-    app.stepsPerSecond = 100
+    app.stepsPerSecond = 60
     app.grassX = 0
 
     # Plant select screen
@@ -99,6 +102,8 @@ def onAppStart(app):
     app.progress = 0
     app.countdownDone = False
     app.levelWon = False
+    app.starterCalled = False
+    app.loadingScreenDrawn = False
 
     # Plants
     # All of these are screenshots from this image: https://tvtropes.org/pmwiki/pmwiki.php/Characters/PlantsVsZombiesPlants
@@ -109,7 +114,7 @@ def onAppStart(app):
     app.ice_shooter_card = str(plants_dir / "ice_shooter.png")
     app.tallnut_card = str(plants_dir / "tallnut.png")
     app.double_sunflower_card = str(plants_dir / "double_sunflower.png")
-    app.all_plants = [app.pea_shooter_card, app.sunflower_card, app.walnut_card, app.double_pea_shooter_card, app.ice_shooter_card, app.tallnut_card, app.double_sunflower_card]
+    app.all_plants = [app.pea_shooter_card, app.sunflower_card, app.walnut_card, app.double_pea_shooter_card, app.ice_shooter_card, app.tallnut_card, app.double_sunflower_card] 
 
 def redrawAll(app):
     if app.isLoadingScreen: # Drawing the loading screen
@@ -166,6 +171,7 @@ def redrawAll(app):
             drawLabel("YOU WIN!", app.width/2, app.height/2, size=100)
 
         if app.grassLevelStarted and app.animationDone:
+            drawImage(app.grass_level_background, 0 - app.grassX, 0, width = 2500, height = app.height)
             for i in range(1, 6):
                 app.lawnmowers[i-1] = Lawnmower(i)
             drawImage(app.plants_top_bar, 0, 0, width = 700, height = 100)
@@ -239,7 +245,10 @@ def onStep(app):
             app.zombieSpawnTimer = 0
         for zombie in app.zombies:
             if zombie.notEating: 
-                zombie.x -= app.zombieSpeed
+                if zombie.isSlowed: 
+                    zombie.x -= (app.zombieSpeed/1.5)
+                else: 
+                    zombie.x -= app.zombieSpeed
             if zombie.x < (app.lawnmowers[zombie.lane].x + 20) or zombie.isDead:
                 app.zombies.remove(zombie)
                 app.totalZombies -= 1
