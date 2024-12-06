@@ -55,11 +55,11 @@ def redrawAll(app):
             drawLabel("YOU WIN!", app.width/2, app.height/2, size=100)
 
         if app.levelStarted and app.animationDone:
-            for i in range(1, 6):
-                app.lawnmowers[i-1] = Lawnmower(i)
+            for lawnmower in app.lawnmowers: 
+                lawnmower.draw()
             drawImage(app.plants_top_bar, 0, 0, width = 400, height = 70)
-            for i, plant in enumerate(app.selected_plants):
-                app.topbar[i] = PlantCard(i+1, plant)
+            for card in app.topbar:
+                card.draw()
             drawRect(15, 70, 85, 30, fill=rgb(233,239,186))
             drawLabel(str(app.sun_count), 60, 85, bold = True, size = 24)
             drawImage(app.shovel, 710, 5, width = 100, height = 90)
@@ -174,9 +174,6 @@ def onStep(app):
                     zombie.notEating = True
 
 def onMousePress(app, mouseX, mouseY):
-
-    num_selected = len(app.selected_plants)
-
     # User clicks on 'click to start' button
     if app.isLoadingScreen and 350 <= mouseX <= 600 and 445 <= mouseY <= 490:
         app.isLoadingScreen = False
@@ -204,17 +201,17 @@ def onMousePress(app, mouseX, mouseY):
         if 27 <= mouseX <= 440 and 123 <= mouseY <= 435:
             selected_x, selected_y = getClosestSelectGridCoor(mouseX, mouseY)
             app.curr_plant = app.select_grid[selected_x][selected_y]
-            app.moved_plant = False
+            print(app.curr_plant)
         
         # User places selected plant in row
         if app.curr_plant and app.select_cover_left <= mouseX <= app.select_cover_left + app.select_cover_width and app.select_cover_top <= mouseY <= app.select_cover_top + app.select_cover_height:
             num_plants = len(app.selected_plants)
             if app.curr_plant not in app.selected_plants and num_plants < 6:
-                app.moved_plant = True
-                app.selected_plants.append(app.curr_plant)    
+                app.selected_plants.append(app.curr_plant)  
+                app.curr_plant = None  
 
         # User clicks on already selected card
-        if 87 <= mouseX <= 427 and 18 <= mouseY <= 79:
+        if 87 <= mouseX <= 427 and 18 <= mouseY <= 79 and not app.curr_plant:
             if len(app.selected_plants) == 0: pass
             else:
                 index = getSelectedCard(mouseX)
@@ -229,6 +226,8 @@ def onMousePress(app, mouseX, mouseY):
         if 160 <= mouseX <= 310 and 483 <= mouseY <= 515:
             app.levelStarted = True
             app.isPlantSelectScreen = False
+            for i, plant in enumerate(app.selected_plants):
+                app.topbar[i] = PlantCard(i+1, plant)
 
     # User clicks on one of the plant cards on the top of the screen
     elif app.levelStarted and 10 <= mouseY <= 90 and 133 <= mouseX <= 675:

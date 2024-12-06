@@ -1,5 +1,6 @@
 from cmu_graphics import *
 from pathlib import Path
+from level_objects import Lawnmower, PlantCard
 
 script_dir = Path(__file__).resolve().parent
 media_dir = script_dir / "media"
@@ -52,8 +53,8 @@ def onAppStart(app):
     app.levelStarted = False
     app.static_background = None
     app.grass_background = str(screens_dir / "front_yard_grass.png") # https://www.reddit.com/r/PlantsVSZombies/comments/vqqhjs/i_made_pvz_evening_enjoy/
-    app.lawnmowers = {"lawnmower1":[], "lawnmower2":[], "lawnmower3":[], "lawnmower4":[], "lawnmower5":[]}
-    app.topbar = {'plant1':[], 'plant2':[], 'plant3':[], 'plant4':[], 'plant5':[], 'plant6':[]}
+    app.lawnmowers = [0, 0, 0, 0, 0]
+    app.topbar = [0, 0, 0, 0, 0, 0]
     app.sun = str(level_objects_dir / "sun.png") # https://heroism.fandom.com/wiki/Sun_(Plants_vs._Zombies)
     app.sun_count = 50
     app.plants_top_bar = str(screens_dir / "plants_top_bar.png") # https://plantsvszombies.fandom.com/wiki/Ice_Level
@@ -125,5 +126,10 @@ def onAppStart(app):
     app.trash_y = 28
     app.trash_width = 50
     app.trash_height = 50
+
+    # Level
+    for i in range(1, 6):
+        app.lawnmowers[i-1] = Lawnmower(i)
+    print(app.lawnmowers)
 
     

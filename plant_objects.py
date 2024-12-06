@@ -12,14 +12,13 @@ class Plant:
     def __init__(self, row, col, image_path, cost, health):
         self.x = 160 + 145 * col
         self.y = 90 + 134 * row
-        self.width = self.height = 120
         self.image = str(image_path)
         self.cost = cost
         self.isDead = False
         self.health = health
     
     def draw(self):
-        drawImage(self.image, self.x, self.y, width = self.width, height = self.height) # resize on app start
+        drawImage(self.image, self.x, self.y, width = 120, height = 120)
     
     def takeDamage(self, damage):
         self.health -= damage
@@ -141,7 +140,7 @@ class DoublePeashooter(Plant):
 
 class Iceshooter(Plant):
     def __init__(self, row, col):
-        super().__init__(row, col, plants_dir / "iceshooter.png", cost = 100, health = 300)
+        super().__init__(row, col, plants_dir / "iceshooter.gif", cost = 100, health = 300)
         self.peaX = 220 + 145 * col
         self.peaXCopy = self.peaX
         self.damage = 20
@@ -156,7 +155,7 @@ class Iceshooter(Plant):
         drawCircle(self.peaXCopy, self.y + 60, 10, fill=self.fill, border=self.border)
         
     def update(self, zombies):
-        self.fill = rgb(80,217,255)
+        self.fill = rgb(187,215,100)
         self.border = 'black'
         self.peaTimer += 1
         self.peaXCopy += 50
@@ -187,5 +186,5 @@ def postPlant(plant, x, y):
     elif os.path.basename(plant) == os.path.basename(str(plants_dir / "double_sunflower.png")): # https://plantsvszombies.fandom.com/wiki/Twin_Sunflower
         return DoubleSunflower(x, y)
     elif os.path.basename(plant) == os.path.basename(str(plants_dir / "ice_shooter.png")): # https://www.pngegg.com/en/png-zsemg
-        return Iceshooter(x, y)
+        return DoubleSunflower(x, y)
 

@@ -13,8 +13,8 @@ class Zombie:
         self.health = health
         self.damage = 6
         self.y = 0
-        self.width = 150
         self.isSlowed = False
+        self.width = 150
         self.notEating = True
         self.isDead = False
         self.height = 130
@@ -36,7 +36,6 @@ class Zombie:
     
     def takeDamage(self, damage):
         self.health -= damage
-        self.isSlowed = True
         if self.health <= 0:
             self.isDead = True
 
