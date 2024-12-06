@@ -43,16 +43,26 @@ class Peashooter(Plant):
         drawCircle(self.peaXCopy, self.y + 60, 10, fill=self.fill, border=self.border)
         
     def update(self, zombies):
-        self.fill = rgb(187,215,100)
-        self.border = 'black'
-        self.peaTimer += 1
-        self.peaXCopy += 50
-        for zombie in zombies:
-            if self.peaXCopy > zombie.x+(zombie.width/2):
-                zombie.takeDamage(self.damage)
-                self.peaXCopy = self.peaX
+        self.peaTimer += 5
+        if self.peaTimer >= self.peaTime:
+            self.peaActive = True
+        if self.peaActive:
+            self.border = 'black'
+            self.fill = rgb(187,215,100)
+            self.peaTimer = 0
+            self.peaXCopy += 50
+            for zombie in zombies:
+                if self.peaXCopy > zombie.x+(zombie.width/2):
+                    zombie.takeDamage(self.damage)
+                    self.peaXCopy = self.peaX
+                    self.peaActive = False
+                    break
         if self.peaXCopy > 1920:
             self.peaXCopy = self.peaX
+            self.peaActive = False
+        if self.peaActive == False:
+            self.border = None
+            self.fill = None
         
     def reset(self):
         self.fill = None
