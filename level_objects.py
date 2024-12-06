@@ -8,6 +8,8 @@ media_dir = script_dir / "media"
 class Lawnmower:
     def __init__(self, lane):
         self.lane = lane
+        self.activated = False
+        self.dead = False
         self.width = self.height = 100
         self.image_path = str(media_dir / "lawn_mower.png") # https://plantsvszombies.fandom.com/wiki/Lawn_Mower/Gallery
         self.activated = False
@@ -28,6 +30,7 @@ class Lawnmower:
             case 5:
                 self.x = 30
                 self.y = 643
+    def draw(self):
         drawImage(self.image_path, self.x, self.y, width = self.width, height = self.height)
     
 class PlantCard:
@@ -51,6 +54,7 @@ class PlantCard:
                 self.x = 506
             case 6:
                 self.x = 600
+    def draw(self):
         drawImage(self.plant, self.x, self.y, width = self.width, height = self.height)
 
 class Sun:

@@ -14,6 +14,48 @@ plants_dir = media_dir / "plants"
 
 pygame.mixer.init()
 
+def reset(app):
+        app.totalZombies = 20
+        app.possibleZombies = []
+        for _ in range(12):
+            app.possibleZombies.append(RegZombie())
+        for _ in range(4):
+            app.possibleZombies.append(ConeZombie())
+        for _ in range(4):
+            app.possibleZombies.append(BucketZombie())
+        app.lawnmowers = [0, 0, 0, 0, 0]
+        for i in range(1, 6): app.lawnmowers[i-1] = Lawnmower(i)
+        app.sun_count = 50
+        app.grid = [[0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0]]
+        app.card_selected = None
+        app.gridX = app.gridY = 0
+        app.suns = []
+        app.zombiesKilled = 0
+        app.zombies = []
+        app.sunflowers = []
+        app.lanesOccupied = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
+        app.possibleZombies = []
+        app.shovel_activated = False
+        app.background_drawn = False
+        app.transition_opacity = 100
+        app.grassX = 0
+        app.selected_plants = []
+        app.curr_plant = None
+        app.moved_plant = False
+        app.selected_delete_card = None
+        app.animationDone = False
+        app.countdown = False
+        app.number = -1
+        app.progress = 0
+        app.countdownDone = False
+        app.levelWon = False
+        app.starterCalled = False
+        app.loadingScreenDrawn = False
+
 def onAppStart(app):
     # Setting screen size to 1920x1080 (default)
     app.width = 1920
@@ -47,13 +89,18 @@ def onAppStart(app):
     # Level selector screen
     app.isLevelSelectorScreen = False
     app.level_selector_screen_background = str(media_dir / "level_selector_screen.png") # Screenshot from my iPhone - Plants VS Zombies 1 Application
+    app.ready = str(media_dir / "ready.png") # https://www.iloveimg.com/download/wqAr8q51vscrqygk5p6jAszglnyjjz6sbgd5c35sdl8xt5hc72j14bAgdc4yxg5b2rjxxgpw0zw3smf0hAhxf5nflwllzk3r9gA0bzgs8bb9nnsm3k2Akjyc4trqdmvswvwwsh8gx2782A474qs9782cng9s1zygsrd6st78rrd934wf9y7q/20
+    app.set = str(media_dir / "set.png") # https://www.iloveimg.com/download/wqAr8q51vscrqygk5p6jAszglnyjjz6sbgd5c35sdl8xt5hc72j14bAgdc4yxg5b2rjxxgpw0zw3smf0hAhxf5nflwllzk3r9gA0bzgs8bb9nnsm3k2Akjyc4trqdmvswvwwsh8gx2782A474qs9782cng9s1zygsrd6st78rrd934wf9y7q/20
+    app.plant = str(media_dir / "plant.png") # https://www.iloveimg.com/download/wqAr8q51vscrqygk5p6jAszglnyjjz6sbgd5c35sdl8xt5hc72j14bAgdc4yxg5b2rjxxgpw0zw3smf0hAhxf5nflwllzk3r9gA0bzgs8bb9nnsm3k2Akjyc4trqdmvswvwwsh8gx2782A474qs9782cng9s1zygsrd6st78rrd934wf9y7q/20
+    app.count = [app.ready, app.set, app.plant]
+
 
     # Level 1 (grass level)
     app.isGrassLevel = False
     app.static_background = None
     app.grass_level_background = str(media_dir / "front_yard_grass.png") # https://www.reddit.com/r/PlantsVSZombies/comments/vqqhjs/i_made_pvz_evening_enjoy/
-    app.lawnmowers = {"lawnmower1":[], "lawnmower2":[], "lawnmower3":[], "lawnmower4":[], "lawnmower5":[]}
-    app.topbar = {'plant1':[], 'plant2':[], 'plant3':[], 'plant4':[], 'plant5':[], 'plant6':[]}
+    app.lawnmowers = [0, 0, 0, 0, 0]
+    app.topbar = []
     app.sun = str(media_dir / "sun.png") # https://heroism.fandom.com/wiki/Sun_(Plants_vs._Zombies)
     app.sun_count = 50
     app.plants_top_bar = str(media_dir / "plants_top_bar.png") # https://plantsvszombies.fandom.com/wiki/Ice_Level
@@ -68,7 +115,7 @@ def onAppStart(app):
     app.suns = []
     app.sunFallSpeed = 3
     app.sunSpawnTimer = 0
-    app.zombieSpeed = 2.5
+    app.zombieSpeed = 3.5
     app.zombiesKilled = 0
     app.zombieSpawnTimer = 0
     app.totalZombies = 50
@@ -81,10 +128,13 @@ def onAppStart(app):
     app.possibleZombies = []
     app.shovel_activated = False
     app.background_drawn = False
-    app.static_background = []
+    app.gameOver = False
+    app.game_over_screen = str(media_dir / "game_over.png")
+    app.transition_opacity = 100
+    app.is_transition = False
 
     # Animation for grass level to move from left to right for plant select screen
-    app.stepsPerSecond = 60
+    app.stepsPerSecond = 40
     app.grassX = 0
 
     # Plant select screen
@@ -98,12 +148,14 @@ def onAppStart(app):
     app.grassLevelStarted = False
     app.animationDone = False
     app.countdown = False
-    app.number = 4
+    app.number = -1
     app.progress = 0
     app.countdownDone = False
     app.levelWon = False
     app.starterCalled = False
     app.loadingScreenDrawn = False
+    app.game_over_transition_done = False
+    for i in range(1, 6): app.lawnmowers[i-1] = Lawnmower(i)
 
     # Plants
     # All of these are screenshots from this image: https://tvtropes.org/pmwiki/pmwiki.php/Characters/PlantsVsZombiesPlants
@@ -165,18 +217,17 @@ def redrawAll(app):
             drawCircle(794, 66, 55, fill = rgb(146,147,143), border = rgb(74,73,75))
             drawImage(app.delete_plant, 757, 30, width = 85, height = 85)
         if app.countdown:
-            drawLabel(app.number, app.width/2, app.height/2, size=100)
+            drawImage(app.count[app.number], app.width/2 - 250, app.height/2 - 100, width=500, height = 200)
 
         if app.levelWon:
             drawLabel("YOU WIN!", app.width/2, app.height/2, size=100)
 
         if app.grassLevelStarted and app.animationDone:
-            drawImage(app.grass_level_background, 0 - app.grassX, 0, width = 2500, height = app.height)
-            for i in range(1, 6):
-                app.lawnmowers[i-1] = Lawnmower(i)
+            for lawnmower in app.lawnmowers:
+                lawnmower.draw()
             drawImage(app.plants_top_bar, 0, 0, width = 700, height = 100)
-            for i, plant in enumerate(app.selected_plants):
-                app.topbar[i] = PlantCard(i+1, plant)
+            for card in app.topbar:
+                card.draw()
             drawRect(15, 70, 85, 30, fill=rgb(233,239,186))
             drawLabel(str(app.sun_count), 60, 85, bold = True, size = 24)
             drawImage(app.shovel, 710, 5, width = 100, height = 90)
@@ -192,6 +243,12 @@ def redrawAll(app):
             drawRect(875, 30, 320, 35, fill = rgb(34,33,51))
             if app.progress > 0:
                 drawRect(875, 30, app.progress*320, 35, fill = rgb(173,214,19))
+    
+    if app.gameOver:
+        drawImage(app.game_over_screen, 0, 0, width = app.width, height = app.height)
+        drawRect(0, 0, app.width, app.height, fill = 'black')
+        drawRect(700, 690, 110, 90, fill = 'black', opacity = app.transition_opacity)
+        
 
 def onStep(app):
     if app.isGrassLevel and not app.grassLevelStarted:
@@ -209,14 +266,15 @@ def onStep(app):
     # Countdown to start level
     if app.countdown:
         time.sleep(1)
-        if app.number > 0:
-            app.number -= 1
+        if app.number < 2:
+            app.number += 1
         else:
             app.countdown = False
             app.animationDone = True
     
-    # Sun randomly spawning in and falling down the screen
     if app.animationDone:
+
+        # Sun randomly spawning in and falling down the screen  
         app.sunSpawnTimer += 10
         if app.sunSpawnTimer > random.randint(750, 1250):
             newSun = Sun()
@@ -244,17 +302,38 @@ def onStep(app):
             app.zombies.append(newZombie)
             app.zombieSpawnTimer = 0
         for zombie in app.zombies:
+            if 160 <= zombie.x<= 1445:
+                x, y = getClosestGridCoor(zombie.x, zombie.y)
+                if app.grid[x][y] != 0 and (zombie.x - (zombie.width/2) + 40) <= app.grid[x][y].x:
+                    zombie.notEating = False
+                    app.grid[x][y].takeDamage(zombie.damage)
+                else:
+                    zombie.notEating = True
             if zombie.notEating: 
                 if zombie.isSlowed: 
                     zombie.x -= (app.zombieSpeed/1.5)
                 else: 
                     zombie.x -= app.zombieSpeed
-            if zombie.x < (app.lawnmowers[zombie.lane].x + 20) or zombie.isDead:
+            if zombie.isDead or (zombie.x < (app.lawnmowers[zombie.lane].x + 20) and not app.lawnmowers[zombie.lane].dead):
                 app.zombies.remove(zombie)
                 app.totalZombies -= 1
                 app.zombiesKilled += 1
                 app.lanesOccupied[zombie.lane] -= 1
                 app.progress = app.zombiesKilled / (app.zombiesKilled + app.totalZombies)
+            if zombie.x < 70:
+                if app.lawnmowers[zombie.lane].dead:
+                    app.gameOver = True
+                    reset(app)
+                    app.is_transition = True
+                else:
+                    app.lawnmowers[zombie.lane].activated = True
+        for lawnmower in app.lawnmowers:
+            if lawnmower.activated:
+                if lawnmower.x < app.width:
+                    lawnmower.x += 15
+                else:
+                    lawnmower.dead = True
+                    lawnmower.activated = False
         
         # Sunflowers will randomly spawn sun if alive or die if they lose all their health
         for sunflower in app.sunflowers[:]:
@@ -268,6 +347,17 @@ def onStep(app):
         # Win condition
         if app.totalZombies == 0:
             app.levelWon = True
+
+        if app.is_transition:
+            if app.transition_opacity > 0:
+                app.transition_opacity -= 5
+            else:
+                app.game_over_transition_done = True
+                app.is_transition = False
+                app.isGrassLevel = False
+                app.isPlantSelectScreen = False
+                app.grassLevelStarted = False
+                app.animationDone = False
         
         # Plants will start to attack zombies whenever a zombie falls in their lane
         for row in range(5):
@@ -278,17 +368,7 @@ def onStep(app):
                     app.grid[row][col].reset()
                 if not isinstance(app.grid[row][col], int) and app.grid[row][col].isDead:
                     app.grid[row][col] = 0
-
-        # Checking if zombie has run into a plant
-        # If it does, it will start to eat the plant
-        for zombie in app.zombies:
-            if 160 <= zombie.x<= 1445:
-                x, y = getClosestGridCoor(zombie.x, zombie.y)
-                if app.grid[x][y] != 0 and (zombie.x - (zombie.width/2) + 40) <= app.grid[x][y].x:
-                    zombie.notEating = False
-                    app.grid[x][y].takeDamage(zombie.damage)
-                else:
-                    zombie.notEating = True
+    
 
 def onMousePress(app, mouseX, mouseY):
 
@@ -331,14 +411,14 @@ def onMousePress(app, mouseX, mouseY):
         app.isGrassLevel = True
         app.sunFallSpeed = 3
         app.sunSpawnTimer = 0
-        app.zombieSpeed = 1
-        app.totalZombies = 10
+        app.zombieSpeed = 2
+        app.totalZombies = 20
         app.possibleZombies = []
-        for _ in range(6):
+        for _ in range(12):
             app.possibleZombies.append(RegZombie())
-        for _ in range(2):
+        for _ in range(4):
             app.possibleZombies.append(ConeZombie())
-        for _ in range(2):
+        for _ in range(4):
             app.possibleZombies.append(BucketZombie())
 
     elif app.isPlantSelectScreen:
@@ -417,6 +497,8 @@ def onMousePress(app, mouseX, mouseY):
         if 260 <= mouseX <= 505 and 730 <= mouseY <= 780:
             app.grassLevelStarted = True
             app.isPlantSelectScreen = False
+            for i, plant in enumerate(app.selected_plants):
+                app.topbar.append(PlantCard(i+1, plant))
 
     # User clicks on one of the plant cards on the top of the screen
     elif app.grassLevelStarted and 10 <= mouseY <= 90 and 133 <= mouseX <= 675:
@@ -474,6 +556,15 @@ def onMousePress(app, mouseX, mouseY):
             if (mouseX-sun.x)**2 + (mouseY-sun.y)**2 <= sun.radius**2:
                 app.suns.remove(sun)
                 app.sun_count += 25
+    
+    elif app.game_over_transition_done and 837 <= mouseX <= 1047 and 700 <= mouseY <= 785:
+        app.isGrassLevel = True
+        app.gameOver = False
+    
+    elif app.game_over_transition_done and 457 <= mouseX <= 655 and 705 <= mouseY <= 770:
+        app.isLevelSelectorScreen = True
+        app.gameOver = False
+        
 
     print(mouseX, mouseY)
 
@@ -500,6 +591,7 @@ def onMouseDrag(app, mouseX, mouseY):
             total_range = 1128 - 870
             percent_volume = (mouseX - 870) / total_range
             app.click_sound.set_volume(percent_volume)
+
 
 def main():
     runApp()
